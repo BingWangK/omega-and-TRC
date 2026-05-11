@@ -1,0 +1,16 @@
+1.	Creat a new folder "0_FORSRA". Put unzipped fastq files (not fastq.gz) into the 0_FORSRA folder
+
+2.	In bash, change the conda environment to the provided “SGRNA_SCREEN.yaml” and the active directory to a new folder "1_COUNTS". Copy _library.txt and _1_COUNTS.py to it. Then run _1_COUNTS.py.
+a.	This script will make sgRNA count tables from the fastq’s with columns corresponding to the file names. The output will be in the OUTPUT folder. 
+b.	1.1_count_stats.txt will provide effective sequencing depth stats.
+c.	1.0_count_table.txt has the per-file counts.
+
+3.	Open 1.0_count_table.txt in excel and make copies with only the columns you are going to compare. For example, the 4 columns corresponding to the rpoZ mutant timepoint 0 and the 4 columns corresponding to the rpoZ mutant final plasmid pool.
+
+4.	Make a new folder "2_NORMALIZE". Copy _2_NORMALIZE.R, _controlguides.txt, _EcoWG1_Library.txt, and _OPERONS_regulonDB.txt to it. Open _2_NORMALIZE.R (I use Rstudio). Change the setwd() statement to where you have your output folder, set the name variable to what you want to call the sample (EX: rpoZ_LB) and set the counts initial variable to the count table subset you made in 3. Now run the entirety of the script. The output folder should be populated with Deseq2 outputs. 
+a.	The MA plot, PCA, and DispEst are for QC purposes. The more or less should look like RNA-Seq data equivalents. Keep in mind, the MA plot is by-guide, not by gene, and when scores are collapsed by gene, many more hits become significant.
+b.	This script normalizes per-guide scores to an input pool and then provides weighted per-guide fold-changes normalized to a set of internal control guides, using Deseq2. The Deseq2 output is then collapsed to per-gene scores based upon the value of the median guide and variability accounted for using median absolute deviation.
+c.	The final rank order plot is useful for figuring out what type of screen occurred. Genotypes with more or less wild-type growth will have no gene scores enriched above the genome-wide average, and about 1/10th of the genome depleted (corresponding to essential genes). Genotypes/conditions that cause substantial growth defects will have significantly enriched genes.
+
+5.	Make new folder "3_DEG" and open _3_DEG.R in it. As before, set the working directory to the OUTPUT folder and indicate the name from 4. of your ‘wild-type’ (x-axis on result graph) and ‘mutant’ (y-axis on result graph). Now, just run the entire script. 
+a.	The script takes the per-gene scores of the two genotypes/conditions and builds a linear model off of them. It then iterates through gene-by-gene and removing them and seeing whether the linear model correlation becomes stronger. This indicates that the gene is a significant outlier (i.e. different from wild-type to mutant). These genes are scores as significant. Finally, each gene is assigned a score based on deviation from the linear model that corresponds to difference in fitness between wild-type and mutant.
